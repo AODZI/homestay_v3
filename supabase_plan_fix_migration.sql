@@ -38,7 +38,7 @@ begin
   ) then
     alter table public.homestay_plans
       add constraint homestay_plans_plan_type_check
-      check (plan_type in ('credit', 'yearly', 'infinity'));
+      check (plan_type in ('credit', 'yearly', 'infinity', 'days_7', 'days_15', 'days_30'));
   end if;
 
   if not exists (

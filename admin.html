@@ -464,7 +464,82 @@
       const type = homestay.plan?.plan_type || homestay.planType || "credit";
       if (type === "infinity") return "Infinity";
       if (type === "yearly") return "รายปี";
+      const durationDays = getAdminDurationPlanDays(type);
+      if (durationDays) return `${durationDays} วัน`;
       return "เครดิต";
+    }
+
+    function getAdminDurationPlanDays(type = "") {
+      const match = String(type || "").match(/^days_(\d+)$/);
+      return match ? Number(match[1]) : 0;
+    }
+
+    function getDateAfterDays(startDate, days) {
+      const expiry = new Date(startDate);
+      expiry.setDate(expiry.getDate() + Number(days || 0));
+      return expiry.toISOString();
+    }
+
+    function getAdminPlanExpiry(homestay) {
+      const plan = homestay.plan || {};
+      const type = plan.plan_type || homestay.planType || "credit";
+      const expiresAt = plan.plan_expires_at || plan.planExpiresAt || homestay.planExpiresAt || "";
+      const startedAt = plan.plan_started_at || plan.planStartedAt || homestay.planStartedAt || "";
+      if (expiresAt) {
+        const expiry = new Date(expiresAt);
+        return Number.isNaN(expiry.getTime()) ? null : expiry;
+      }
+
+      if (!startedAt) return null;
+      const expiry = new Date(startedAt);
+      if (Number.isNaN(expiry.getTime())) return null;
+
+      const durationDays = getAdminDurationPlanDays(type);
+      if (type === "yearly") expiry.setFullYear(expiry.getFullYear() + 1);
+      if (durationDays) expiry.setDate(expiry.getDate() + durationDays);
+      return type === "yearly" || durationDays ? expiry : null;
+    }
+
+    function getAdminPlanDaysLeft(homestay) {
+      const expiry = getAdminPlanExpiry(homestay);
+      return expiry ? Math.max(0, Math.ceil((expiry - new Date()) / 86400000)) : 0;
+    }
+
+    function formatAdminCreditPill(homestay, status) {
+      const plan = homestay.plan || {};
+      const type = plan.plan_type || homestay.planType || "credit";
+      const credits = Number(homestay.credits ?? plan.credits ?? 0);
+      const durationDays = getAdminDurationPlanDays(type);
+      const daysLeft = getAdminPlanDaysLeft(homestay);
+
+      let title = `${credits.toLocaleString("th-TH")} เครดิต`;
+      let detail = status.active ? "ใช้งานได้" : "ใช้งานไม่ได้";
+      let className = status.active ? "is-active" : "is-inactive";
+
+      if (type === "infinity") {
+        title = "Infinity";
+        detail = "ไม่จำกัด • เครดิต 0 ก็ใช้ได้";
+        className = "is-infinity";
+      } else if (type === "yearly") {
+        title = `รายปี • เหลือ ${daysLeft.toLocaleString("th-TH")} วัน`;
+        detail = daysLeft > 0 ? "ใช้งานได้" : "หมดอายุ";
+        className = daysLeft > 0 ? "is-duration" : "is-inactive";
+      } else if (durationDays) {
+        if (daysLeft > 0) {
+          title = `ทดลอง ${durationDays} วัน`;
+          detail = `เหลือ ${daysLeft.toLocaleString("th-TH")} วัน • เครดิต ${credits.toLocaleString("th-TH")}`;
+          className = "is-duration";
+        } else {
+          title = `ทดลอง ${durationDays} วันหมดแล้ว`;
+          detail = credits > 0 ? `ใช้เครดิตต่อได้ • ${credits.toLocaleString("th-TH")} เครดิต` : "รอเติมเครดิต";
+          className = credits > 0 ? "is-active" : "is-inactive";
+        }
+      }
+
+      return {
+        className,
+        html: `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span>`
+      };
     }
 
     function getAdminHomestayStatus(homestay) {
@@ -482,11 +557,19 @@
 
       if (type === "infinity") return { active: true, label: "ใช้งานอยู่" };
 
-      if (type === "yearly") {
+      const durationDays = getAdminDurationPlanDays(type);
+      if (type === "yearly" || durationDays) {
         if (!expiresAt && !startedAt) return { active: false, label: "หยุดทำงาน" };
         const expiry = expiresAt ? new Date(expiresAt) : new Date(startedAt);
-        if (!expiresAt && !Number.isNaN(expiry.getTime())) expiry.setFullYear(expiry.getFullYear() + 1);
+        if (!expiresAt && !Number.isNaN(expiry.getTime())) {
+          if (type === "yearly") expiry.setFullYear(expiry.getFullYear() + 1);
+          if (durationDays) expiry.setDate(expiry.getDate() + durationDays);
+        }
         const active = !Number.isNaN(expiry.getTime()) && new Date() < expiry;
+        if (durationDays && !active) {
+          const creditActive = credits > 0;
+          return { active: creditActive, label: creditActive ? "ใช้งานอยู่" : "รอเติมเครดิต" };
+        }
         return { active, label: active ? "ใช้งานอยู่" : "หยุดทำงาน" };
       }
 
@@ -522,6 +605,7 @@
         const customerUrl = escapeHtml(homestay.customerUrl || `customer.html?homestay=${encodeURIComponent(homestay.slug || "")}`);
         const status = getAdminHomestayStatus(homestay);
         const statusClass = status.active ? "is-active" : "is-inactive";
+        const creditPill = formatAdminCreditPill(homestay, status);
 
         return `
           <div class="admin-homestay-card" data-homestay-id="${id}">
@@ -545,7 +629,7 @@
                   <a href="${customerUrl}" target="_blank" rel="noopener">Customer</a>
                 </div>
               </div>
-              <div class="admin-credit-pill">${credits.toLocaleString("th-TH")} เครดิต</div>
+              <div class="admin-credit-pill ${creditPill.className}">${creditPill.html}</div>
             </div>
             <div class="admin-homestay-actions">
               <input type="text" value="${escapeHtml(ownerPassword)}" data-role="ownerPassword" aria-label="Owner password" />
@@ -555,6 +639,10 @@
               <input type="number" min="1" step="1" value="10" data-role="creditAmount" aria-label="จำนวนเครดิต" />
               <button type="button" class="admin-add-credit" data-action="addCredits">เติมเครดิต</button>
               <button type="button" class="admin-remove-credit" data-action="removeCredits">ลบเครดิต</button>
+              <button type="button" class="admin-add-credit" data-action="setDurationPlan" data-days="7">7 วัน</button>
+              <button type="button" class="admin-add-credit" data-action="setDurationPlan" data-days="15">15 วัน</button>
+              <button type="button" class="admin-add-credit" data-action="setDurationPlan" data-days="30">30 วัน</button>
+              <button type="button" class="admin-add-credit" data-action="setInfinityPlan">Infinity</button>
               <button type="button" class="admin-delete-homestay" data-action="deleteHomestay">ลบโฮมสเตย์</button>
             </div>
           </div>
@@ -602,6 +690,62 @@
       } catch (error) {
         console.error(error);
         showToast(`บันทึกเครดิตไม่สำเร็จ: ${error.message || "ไม่ทราบสาเหตุ"}`);
+      }
+    }
+
+    async function setHomestayDurationPlan(homestayId, days) {
+      const homestay = getAdminHomestayById(homestayId);
+      if (!homestay) return;
+      const durationDays = Number(days || 0);
+      if (![7, 15, 30].includes(durationDays)) {
+        showToast("เลือกระยะเวลาไม่ถูกต้อง");
+        return;
+      }
+
+      const start = new Date().toISOString();
+      try {
+        const result = await apiRequest({
+          action: "adminUpdateHomestayPlan",
+          homestayId,
+          plan: {
+            planType: `days_${durationDays}`,
+            credits: Number(homestay.credits ?? homestay.plan?.credits ?? 0),
+            planStartedAt: start,
+            planExpiresAt: getDateAfterDays(start, durationDays),
+            status: "active"
+          }
+        });
+        if (!result.ok) throw new Error(result.message || "ตั้งแพ็กเกจแบบวันไม่สำเร็จ");
+        showToast(`ตั้งเครดิตแบบ ${durationDays} วันแล้ว`);
+        await loadAdminHomestays();
+      } catch (error) {
+        console.error(error);
+        showToast(`ตั้งเครดิตแบบ ${durationDays} วันไม่สำเร็จ: ${error.message || "ไม่ทราบสาเหตุ"}`);
+      }
+    }
+
+    async function setHomestayInfinityPlan(homestayId) {
+      const homestay = getAdminHomestayById(homestayId);
+      if (!homestay) return;
+
+      try {
+        const result = await apiRequest({
+          action: "adminUpdateHomestayPlan",
+          homestayId,
+          plan: {
+            planType: "infinity",
+            credits: Number(homestay.credits ?? homestay.plan?.credits ?? 0),
+            planStartedAt: new Date().toISOString(),
+            planExpiresAt: null,
+            status: "active"
+          }
+        });
+        if (!result.ok) throw new Error(result.message || "ตั้งอินฟินิตี้ไม่สำเร็จ");
+        showToast("ตั้งอินฟินิตี้แล้ว");
+        await loadAdminHomestays();
+      } catch (error) {
+        console.error(error);
+        showToast(`ตั้งอินฟินิตี้ไม่สำเร็จ: ${error.message || "ไม่ทราบสาเหตุ"}`);
       }
     }
 
@@ -681,6 +825,8 @@
 
       if (button.dataset.action === "addCredits") updateHomestayCredits(homestayId, 1);
       if (button.dataset.action === "removeCredits") updateHomestayCredits(homestayId, -1);
+      if (button.dataset.action === "setDurationPlan") setHomestayDurationPlan(homestayId, Number(button.dataset.days || 0));
+      if (button.dataset.action === "setInfinityPlan") setHomestayInfinityPlan(homestayId);
       if (button.dataset.action === "saveOwnerPassword") updateOwnerPassword(homestayId);
       if (button.dataset.action === "saveLineToId") updateHomestayLineToId(homestayId);
       if (button.dataset.action === "deleteHomestay") deleteAdminHomestay(homestayId);
@@ -843,7 +989,7 @@
       try {
         const result = await apiRequest({ action: "resetPlan" });
         if (!result.ok) throw new Error(result.message || "รีเซ็ตระบบไม่สำเร็จ");
-        setPlan("credit", "");
+        setPlan("credit", "", "");
         setCredits(0);
         showToast("รีเซ็ตเรียบร้อย ระบบหยุดทำงาน");
         renderCurrentStatus();
@@ -1333,7 +1479,10 @@
     });
 
     document.getElementById("adminPassword").addEventListener("keydown", e => {
-      if (e.key === "Enter") document.getElementById("adminLoginBtn").click();
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("adminLoginBtn").click();
+      }
     });
 
     document.getElementById("adminLogoutBtn").addEventListener("click", () => {

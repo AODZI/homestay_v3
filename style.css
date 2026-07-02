@@ -330,12 +330,44 @@
 
 .admin-credit-pill {
   flex: 0 0 auto;
-  padding: 9px 12px;
-  border-radius: 999px;
+  display: grid;
+  gap: 2px;
+  min-width: 148px;
+  padding: 10px 12px;
+  border-radius: 14px;
   background: var(--green-800);
   color: white;
-  font-weight: 800;
+  text-align: right;
+  box-shadow: 0 10px 24px rgba(20, 83, 63, .12);
+}
+
+.admin-credit-pill strong {
+  font-weight: 900;
   font-size: 14px;
+  line-height: 1.15;
+}
+
+.admin-credit-pill span {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  opacity: .9;
+}
+
+.admin-credit-pill.is-duration {
+  background: #1d4ed8;
+}
+
+.admin-credit-pill.is-infinity {
+  background: #6d28d9;
+}
+
+.admin-credit-pill.is-inactive {
+  background: #991b1b;
+}
+
+.admin-credit-pill.is-active {
+  background: var(--green-800);
 }
 
 .admin-homestay-actions {

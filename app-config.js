@@ -83,39 +83,78 @@ function setCredits(n) {
 }
 function resetLocalPlanState() {
   setCredits(0);
-  setPlan("credit", "");
+  setPlan("credit", "", "");
 }
 function getPlanType() {
-  return localStorage.getItem("hs_plan_type") || ""; // "credit"|"yearly"|"infinity"
+  return localStorage.getItem("hs_plan_type") || ""; // "credit"|"yearly"|"infinity"|"days_7"|"days_15"|"days_30"
 }
 function getPlanStart() {
   return localStorage.getItem("hs_plan_start") || "";
 }
-function setPlan(type, startDate) {
+function getPlanExpiryStored() {
+  return localStorage.getItem("hs_plan_expiry") || "";
+}
+function setPlan(type, startDate, expiryDate) {
   localStorage.setItem("hs_plan_type", type);
   if (startDate) {
     localStorage.setItem("hs_plan_start", startDate);
   } else {
     localStorage.removeItem("hs_plan_start");
   }
+  if (expiryDate) {
+    localStorage.setItem("hs_plan_expiry", expiryDate);
+  } else {
+    localStorage.removeItem("hs_plan_expiry");
+  }
+}
+function getDurationPlanDays(type = getPlanType()) {
+  const match = String(type || "").match(/^days_(\d+)$/);
+  return match ? Number(match[1]) : 0;
+}
+function getPlanExpiryDate() {
+  const storedExpiry = getPlanExpiryStored();
+  if (storedExpiry) {
+    const expiry = new Date(storedExpiry);
+    if (!Number.isNaN(expiry.getTime())) return expiry;
+  }
+
+  const start = getPlanStart();
+  if (!start) return null;
+
+  const type = getPlanType();
+  const expiry = new Date(start);
+  if (Number.isNaN(expiry.getTime())) return null;
+
+  if (type === "yearly") {
+    expiry.setFullYear(expiry.getFullYear() + 1);
+    return expiry;
+  }
+
+  const days = getDurationPlanDays(type);
+  if (days > 0) {
+    expiry.setDate(expiry.getDate() + days);
+    return expiry;
+  }
+
+  return null;
 }
 function isSystemActive() {
   const type = getPlanType();
   if (type === "infinity") return true;
   if (type === "yearly") {
-    const start = getPlanStart();
-    if (!start) return false;
-    const exp = new Date(start);
-    exp.setFullYear(exp.getFullYear() + 1);
-    return new Date() < exp;
+    const exp = getPlanExpiryDate();
+    return Boolean(exp && new Date() < exp);
   }
+
+  if (getDurationPlanDays(type) > 0) {
+    const exp = getPlanExpiryDate();
+    if (exp && new Date() < exp) return true;
+    return getCredits() > 0;
+  }
+
   // credit plan
   return getCredits() > 0;
 }
 function getExpiryDate() {
-  const start = getPlanStart();
-  if (!start) return null;
-  const exp = new Date(start);
-  exp.setFullYear(exp.getFullYear() + 1);
-  return exp;
+  return getPlanExpiryDate();
 }

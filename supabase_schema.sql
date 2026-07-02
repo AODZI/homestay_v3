@@ -199,8 +199,8 @@ for each row execute function public.set_updated_at();
 -- ===== Credits / subscription =====
 create table if not exists public.homestay_plans (
   homestay_id uuid primary key references public.homestays(id) on delete cascade,
-  plan_type text not null default 'credit'
-    check (plan_type in ('credit', 'yearly', 'infinity')),
+    plan_type text not null default 'credit'
+      check (plan_type in ('credit', 'yearly', 'infinity', 'days_7', 'days_15', 'days_30')),
   credits integer not null default 0,
   plan_started_at timestamptz,
   plan_expires_at timestamptz,

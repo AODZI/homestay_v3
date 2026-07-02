@@ -1666,18 +1666,22 @@ function renderCreditCard() {
 
   const active = isSystemActive();
   card.className = "credit-bar hidden" + (active ? "" : " credit-bar-inactive");
+  const durationDays = typeof getDurationPlanDays === "function" ? getDurationPlanDays(type) : 0;
+  const durationExp = durationDays ? getExpiryDate() : null;
+  const durationDaysLeft = durationExp ? Math.ceil((durationExp - new Date()) / 86400000) : 0;
+  const durationActive = durationDays > 0 && durationDaysLeft > 0;
 
   if (type === "infinity") {
     display.textContent = "∞";
     badge.textContent = "♾️ อินฟินิตี้";
     badge.className = "credit-plan-badge badge-infinity";
     if (expiry) expiry.textContent = "";
-  } else if (type === "yearly") {
+  } else if (type === "yearly" || durationActive) {
     const exp = getExpiryDate();
     const expStr = exp ? exp.toLocaleDateString("th-TH", { year:"numeric", month:"long", day:"numeric" }) : "-";
     const daysLeft = exp ? Math.ceil((exp - new Date()) / 86400000) : 0;
     display.textContent = `${daysLeft > 0 ? daysLeft : 0} วัน`;
-    badge.textContent = "📅 รายปี";
+    badge.textContent = type === "yearly" ? "📅 รายปี" : `📅 ${durationDays} วัน`;
     badge.className = "credit-plan-badge badge-yearly";
     if (expiry) {
       expiry.textContent = `หมดอายุ ${expStr}`;
@@ -1978,6 +1982,13 @@ loginBtn.addEventListener("click", async () => {
   }
 });
 
+ownerPassword?.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    loginBtn.click();
+  }
+});
+
 logoutBtn.addEventListener("click", () => {
   if (_pollingTimer) clearInterval(_pollingTimer);
   if (_dashboardRefreshTimer) clearInterval(_dashboardRefreshTimer);
@@ -2091,14 +2102,18 @@ function renderHeaderCredit() {
   if (creditWrap) {
     creditWrap.classList.toggle('is-inactive', !active);
   }
+  const durationDays = typeof getDurationPlanDays === 'function' ? getDurationPlanDays(type) : 0;
+  const durationExp = durationDays ? getExpiryDate() : null;
+  const durationDaysLeft = durationExp ? Math.max(0, Math.ceil((durationExp - new Date()) / 86400000)) : 0;
+  const durationActive = durationDays > 0 && durationDaysLeft > 0;
   if (type === 'infinity') {
     valEl.textContent = '∞';
     if (labelEl) labelEl.textContent = 'อินฟินิตี้';
-  } else if (type === 'yearly') {
+  } else if (type === 'yearly' || durationActive) {
     const exp = getExpiryDate();
     const daysLeft = exp ? Math.max(0, Math.ceil((exp - new Date()) / 86400000)) : 0;
     valEl.textContent = daysLeft + ' วัน';
-    if (labelEl) labelEl.textContent = 'รายปี';
+    if (labelEl) labelEl.textContent = type === 'yearly' ? 'รายปี' : `${durationDays} วัน`;
   } else {
     valEl.textContent = credits;
     if (labelEl) labelEl.textContent = active ? 'เครดิต' : '⚠️ หมด';

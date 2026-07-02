@@ -426,11 +426,11 @@ function bookingRowFromObject(booking = {}, homestayId) {
 function syncPlanFromRow(row = {}) {
   if (typeof setPlan !== "function" || typeof setCredits !== "function") return;
   if (!row) {
-    setPlan("credit", "");
+    setPlan("credit", "", "");
     setCredits(0);
     return;
   }
-  setPlan(row.plan_type || "credit", row.plan_started_at || "");
+  setPlan(row.plan_type || "credit", row.plan_started_at || "", row.plan_expires_at || "");
   setCredits(Number(row.credits || 0));
 }
 
@@ -769,9 +769,7 @@ function getCustomerPageUrl(slug = getCurrentHomestaySlug()) {
   return `customer.html?homestay=${encodeURIComponent(String(slug || "").trim())}`;
 }
 
-function syncOwnerCustomerLinks() {
-  if (document.body?.dataset?.pageTitleSuffix !== "Owner") return;
-
+function syncCustomerPageLinks() {
   const customerUrl = getCustomerPageUrl();
   document.querySelectorAll('header.topbar .brand[href^="customer.html"]').forEach(link => {
     link.href = customerUrl;
@@ -783,7 +781,7 @@ function applyBrandAssets(settings = {}, pageSuffix = "") {
   const logoUrl = getLogoUrl(settings);
   const suffix = String(pageSuffix || document.body?.dataset?.pageTitleSuffix || "").trim();
 
-  syncOwnerCustomerLinks();
+  syncCustomerPageLinks();
 
   document.querySelectorAll("img.site-logo, img.logo").forEach(img => {
     img.src = logoUrl;
@@ -1722,6 +1720,8 @@ async function localApiRequest(payload) {
     const slug = typeof getCurrentHomestaySlug === "function" ? getCurrentHomestaySlug() : "homestay";
     const planType = typeof getPlanType === "function" ? getPlanType() : "credit";
     const credits = typeof getCredits === "function" ? getCredits() : 0;
+    const planStartedAt = typeof getPlanStart === "function" ? getPlanStart() : "";
+    const planExpiresAt = typeof getExpiryDate === "function" ? getExpiryDate()?.toISOString?.() || "" : "";
     return {
       ok: true,
       data: [{
@@ -1730,7 +1730,12 @@ async function localApiRequest(payload) {
         name: settings.siteName?.value || DEFAULT_SETTINGS.siteName?.value || slug,
         credits,
         planType,
-        plan: { plan_type: planType, credits },
+        plan: {
+          plan_type: planType,
+          credits,
+          plan_started_at: planStartedAt,
+          plan_expires_at: planExpiresAt
+        },
         ownerPassword: localGetHomestayPassword(slug),
         lineToId: settings.lineToId?.value || "",
         ownerUrl: `owner.html?homestay=${encodeURIComponent(slug)}`,
@@ -1765,7 +1770,11 @@ async function localApiRequest(payload) {
 
   if (payload.action === "adminUpdateHomestayPlan") {
     const plan = payload.plan || {};
-    setPlan(plan.planType || plan.plan_type || "credit", plan.planStartedAt || plan.plan_started_at || "");
+    setPlan(
+      plan.planType || plan.plan_type || "credit",
+      plan.planStartedAt || plan.plan_started_at || "",
+      plan.planExpiresAt || plan.plan_expires_at || ""
+    );
     setCredits(Number(plan.credits || 0));
     return { ok: true, data: plan, mode: "local" };
   }
@@ -1773,7 +1782,7 @@ async function localApiRequest(payload) {
   if (payload.action === "adminAdjustHomestayCredits") {
     const delta = Number(payload.delta || 0);
     const nextCredits = Math.max(0, (typeof getCredits === "function" ? getCredits() : 0) + delta);
-    setPlan("credit", "");
+    setPlan("credit", "", "");
     setCredits(nextCredits);
     return { ok: true, data: { plan_type: "credit", credits: nextCredits, status: "active" }, mode: "local" };
   }
@@ -1802,7 +1811,11 @@ async function localApiRequest(payload) {
 
   if (payload.action === "updatePlan") {
     const plan = payload.plan || {};
-    setPlan(plan.planType || plan.plan_type || "credit", plan.planStartedAt || plan.plan_started_at || "");
+    setPlan(
+      plan.planType || plan.plan_type || "credit",
+      plan.planStartedAt || plan.plan_started_at || "",
+      plan.planExpiresAt || plan.plan_expires_at || ""
+    );
     setCredits(Number(plan.credits || 0));
     return { ok: true, data: plan, mode: "local" };
   }
@@ -1810,13 +1823,13 @@ async function localApiRequest(payload) {
   if (payload.action === "adjustPlanCredits") {
     const delta = Number(payload.delta || 0);
     const nextCredits = Math.max(0, (typeof getCredits === "function" ? getCredits() : 0) + delta);
-    setPlan("credit", "");
+    setPlan("credit", "", "");
     setCredits(nextCredits);
     return { ok: true, data: { plan_type: "credit", credits: nextCredits, status: "active" }, mode: "local" };
   }
 
   if (payload.action === "resetPlan") {
-    setPlan("credit", "");
+    setPlan("credit", "", "");
     setCredits(0);
     return { ok: true, data: { plan_type: "credit", credits: 0, status: "active" }, mode: "local" };
   }
