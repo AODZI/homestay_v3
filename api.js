@@ -212,7 +212,8 @@ function normalizeHeroContent(hero = {}) {
     cardEyebrow: String(hero.cardEyebrow ?? hero.card_eyebrow ?? defaults.cardEyebrow ?? "").trim(),
     cardTitle: String(hero.cardTitle ?? hero.card_title ?? defaults.cardTitle ?? "").trim(),
     cardSubtitle: String(hero.cardSubtitle ?? hero.card_subtitle ?? defaults.cardSubtitle ?? "").trim(),
-    cardImage: imageValue(hero.cardImage ?? hero.card_image, defaults.cardImage)
+    cardImage: imageValue(hero.cardImage ?? hero.card_image, defaults.cardImage),
+    contactPhone: String(hero.contactPhone ?? hero.contact_phone ?? defaults.contactPhone ?? "").trim()
   };
 }
 
@@ -1404,9 +1405,10 @@ async function supabaseApiRequest(payload) {
   if (action === "lookupBooking") {
     const code = encodeURIComponent(String(payload.bookingCode || "").trim());
     const rows = await supabaseRequest(`bookings?homestay_id=eq.${homestayId}&booking_code=eq.${code}&select=*&limit=1`);
-    if (rows?.[0]?.id && rows?.[0]?.slip_url) {
-      queueSlipVerification(rows[0].id, homestay.slug);
-    }
+    // ปิดการตรวจสลิปอัตโนมัติชั่วคราว
+    // if (rows?.[0]?.id && rows?.[0]?.slip_url) {
+    //   queueSlipVerification(rows[0].id, homestay.slug);
+    // }
 
     const booking = rows?.[0] ? await signBookingSlipUrls(bookingObjectFromRow(rows[0])) : null;
     if (booking) {
@@ -1522,9 +1524,10 @@ async function supabaseApiRequest(payload) {
     });
 
     // ไม่ตัดเครดิตตอนจอง — รอผลตรวจสลิปก่อน
-    if (rows?.[0]?.id && slipUrl && String(row.slip_verify_status || "not_checked") === "not_checked") {
-      queueSlipVerification(rows[0].id, homestay.slug);
-    }
+    // ปิดการตรวจสลิปอัตโนมัติชั่วคราว
+    // if (rows?.[0]?.id && slipUrl && String(row.slip_verify_status || "not_checked") === "not_checked") {
+    //   queueSlipVerification(rows[0].id, homestay.slug);
+    // }
 
     const booking = rows?.[0] ? await signBookingSlipUrls(bookingObjectFromRow(rows[0])) : null;
     if (booking) queueLineBookingNotification(booking, homestay);

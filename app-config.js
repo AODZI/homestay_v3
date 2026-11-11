@@ -47,7 +47,8 @@ const DEFAULT_SETTINGS = {
     cardEyebrow: "บรรยากาศพักผ่อน",
     cardTitle: "Green",
     cardSubtitle: "Minimal Homestay",
-    cardImage: ""
+    cardImage: "",
+    contactPhone: ""
   },
   propertyPolicy: {
     label: "นโยบายที่พัก",

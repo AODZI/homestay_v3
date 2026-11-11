@@ -183,12 +183,13 @@ Deno.serve(async req => {
 
     const booking = (payload.booking || {}) as Record<string, unknown>;
     const homestay = (payload.homestay || {}) as Record<string, unknown>;
-    const targetLineId = text(homestay.lineToId || homestay.line_to_id || LINE_TO_ID, "");
+    // การจองต้องส่งไปยัง LINE ที่ผูกกับโฮมสเตย์นี้เท่านั้น ห้าม fallback ไปบัญชีกลาง
+    const targetLineId = text(homestay.lineToId || homestay.line_to_id, "");
 
     if (!LINE_CHANNEL_ACCESS_TOKEN || !targetLineId) {
       return jsonResponse({
         ok: false,
-        message: "ยังไม่ได้ตั้ง LINE_CHANNEL_ACCESS_TOKEN หรือ LINE_TO_ID ของโฮมสเตย์นี้"
+        message: "โฮมสเตย์นี้ยังไม่ได้เชื่อม LINE สำหรับรับแจ้งเตือน"
       }, 200);
     }
 

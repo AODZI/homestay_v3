@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="default-home-logo.svg" />
 </head>
 <body data-page-title-suffix="จองห้องพัก">
-  <header class="topbar">
+  <header class="topbar customer-topbar">
     <a class="brand" href="customer.html">
       <img class="site-logo" src="default-home-logo.svg" alt="โลโก้โฮมสเตย์" />
       <div>
@@ -36,7 +36,8 @@
         <p>เลือกห้อง วันที่เข้าพัก เพิ่มบริการเสริม แล้วโอนชำระผ่านบัญชีธนาคารของโฮมสเตย์</p>
         <div class="hero-actions">
           <a href="#rooms" class="primary-link">ดูห้องว่าง</a>
-          <a href="#" class="secondary-link hidden" id="pageLinkBtn" target="_blank" rel="noopener">ดูเพจ</a>
+          <a href="#" class="secondary-link hidden" id="pageLinkBtn" target="_blank" rel="noopener">ติดต่อ Facebook</a>
+          <a href="#" class="secondary-link hidden" id="phoneLinkBtn">โทรหาที่พัก</a>
           <a href="#" class="secondary-link hidden" id="gpsLinkBtn" target="_blank" rel="noopener">ดู GPS</a>
         </div>
       </div>
@@ -278,6 +279,25 @@
       <div class="modal-actions">
         <button type="button" class="ghost-btn" id="backToEditBtn">ย้อนกลับไปแก้ข้อมูล</button>
         <button type="button" id="confirmSendBookingBtn">ยืนยันการจอง</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="bookingSuccessModal">
+    <div class="modal-card booking-success-card">
+      <div class="booking-success-icon">✓</div>
+      <span class="pill">ส่งคำจองสำเร็จ</span>
+      <h3>เลขรายการจองของคุณ</h3>
+      <strong class="booking-success-code" id="successBookingCode">-</strong>
+      <p class="booking-success-warning">กรุณาส่งเลขจองนี้ไปทางเพจเพื่อป้องกันข้อผิดพลาด</p>
+      <div class="booking-success-actions">
+        <button type="button" class="booking-copy-btn" id="copyBookingCodeBtn">
+          <span class="booking-action-icon">⧉</span>
+          <span>คัดลอกเลขจอง</span>
+        </button>
+        <button type="button" class="booking-send-btn" id="sendBookingCodeBtn">
+          ส่งหมายเลขจองเปิด Facebook
+        </button>
       </div>
     </div>
   </div>

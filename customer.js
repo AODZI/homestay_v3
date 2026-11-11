@@ -38,6 +38,7 @@ const qrCodeImage = document.getElementById("qrCodeImage");
 const qrAmountText = document.getElementById("qrAmountText");
 const downloadQrBtn = document.getElementById("downloadQrBtn");
 const pageLinkBtn = document.getElementById("pageLinkBtn");
+const phoneLinkBtn = document.getElementById("phoneLinkBtn");
 const gpsLinkBtn = document.getElementById("gpsLinkBtn");
 const copyAccountBtn = document.getElementById("copyAccountBtn");
 const paymentHelpText = document.getElementById("paymentHelpText");
@@ -60,6 +61,11 @@ const ticketBookingCode = document.getElementById("ticketBookingCode");
 const ticketDetails = document.getElementById("ticketDetails");
 const confirmSendBookingBtn = document.getElementById("confirmSendBookingBtn");
 const backToEditBtn = document.getElementById("backToEditBtn");
+const bookingSuccessModal = document.getElementById("bookingSuccessModal");
+const successBookingCode = document.getElementById("successBookingCode");
+const copyBookingCodeBtn = document.getElementById("copyBookingCodeBtn");
+const sendBookingCodeBtn = document.getElementById("sendBookingCodeBtn");
+let completedBookingCode = "";
 
 const historyForm = document.getElementById("historyForm");
 const historyBookingCode = document.getElementById("historyBookingCode");
@@ -551,7 +557,7 @@ function renderCalendar() {
     if (key === checkOut.value) classes.push("selected-end");
     if (inRange) classes.push("in-range");
 
-    const badge = (isBooked || isClosed) ? "ไม่ว่าง" : (isAvailable ? "ว่าง" : "");
+    const badge = (isBooked || isClosed) ? "จอง" : (isAvailable ? "ว่าง" : "");
 
     cells.push(`
       <button
@@ -559,7 +565,7 @@ function renderCalendar() {
         class="${classes.join(" ")}"
         ${isAvailable ? `onclick="selectCalendarDate('${key}')"` : "disabled"}
       >
-        ${day}
+        <span class="day-number">${day}</span>
         ${badge ? `<span class="badge">${badge}</span>` : ""}
       </button>
     `);
@@ -688,6 +694,7 @@ function renderSettings() {
   }
 
   setupHeroLink(pageLinkBtn, settings.pageUrl?.value);
+  setupPhoneLink(phoneLinkBtn, settings.heroContent?.contactPhone);
   setupHeroLink(gpsLinkBtn, settings.gpsUrl?.value);
 
   updateSummary();
@@ -705,6 +712,64 @@ function setupHeroLink(element, url) {
     element.href = "#";
     element.classList.add("hidden");
   }
+}
+
+function setupPhoneLink(element, phone) {
+  if (!element) return;
+  const displayPhone = String(phone || "").trim();
+  const dialPhone = displayPhone.replace(/[^\d+]/g, "");
+
+  if (dialPhone) {
+    element.href = `tel:${dialPhone}`;
+    element.textContent = `โทร ${displayPhone}`;
+    element.classList.remove("hidden");
+  } else {
+    element.href = "#";
+    element.classList.add("hidden");
+  }
+}
+
+function copyTextFallback(text) {
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand("copy");
+  input.remove();
+}
+
+async function copyCompletedBookingCode(showMessage = true) {
+  if (!completedBookingCode) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(completedBookingCode);
+    } else {
+      copyTextFallback(completedBookingCode);
+    }
+    if (showMessage) showToast(`คัดลอกเลขจอง ${completedBookingCode} แล้ว`);
+  } catch {
+    copyTextFallback(completedBookingCode);
+    if (showMessage) showToast(`คัดลอกเลขจอง ${completedBookingCode} แล้ว`);
+  }
+}
+
+function showBookingSuccess(bookingCode) {
+  completedBookingCode = String(bookingCode || "").trim();
+  if (successBookingCode) successBookingCode.textContent = completedBookingCode || "-";
+
+  const facebookUrl = String(settings.pageUrl?.value || "").trim();
+  if (sendBookingCodeBtn) {
+    sendBookingCodeBtn.dataset.facebookUrl = facebookUrl;
+    sendBookingCodeBtn.disabled = !facebookUrl;
+    sendBookingCodeBtn.innerHTML = facebookUrl
+      ? "ส่งหมายเลขจองเปิด Facebook"
+      : `<span class="booking-action-text"><strong>ยังส่งไม่ได้</strong><small>บ้านพักยังไม่ได้ตั้งลิงก์ Facebook</small></span>`;
+  }
+  bookingSuccessModal?.classList.remove("hidden");
+  document.body.classList.add("booking-success-open");
 }
 
 function setupPaymentQr(amount = 0) {
@@ -1134,28 +1199,19 @@ async function confirmSendBooking() {
   showLoadingPopup("กำลังจองที่พักให้");
 
   try {
-    const verified = await apiRequest({
-      action: "precheckSlip",
-      slipBase64: pendingBooking.slipBase64,
-      booking: pendingBooking
-    });
-
-    // ถ้า precheckSlip ไม่พร้อม (local mode หรือ Edge Function ยังไม่ตั้งค่า) ให้ข้ามได้
-    if (verified.ok && verified.data) {
-      const slipPassed = verified.data.passed === true || verified.data.slipVerifyStatus === "passed";
-      pendingBooking = {
-        ...pendingBooking,
-        paymentStatus: slipPassed ? (verified.data.paymentStatus || "ชำระแล้ว") : "รอตรวจสอบสลิป",
-        status: slipPassed ? (verified.data.status || "ชำระแล้ว") : "รอยืนยัน",
-        slipVerifyStatus: verified.data.slipVerifyStatus || "not_checked",
-        slipVerifyMessage: verified.data.slipVerifyMessage || verified.data.message || "",
-        slipVerifiedAt: verified.data.slipVerifiedAt || new Date().toISOString(),
-        slipTransferAmount: Number(verified.data.slipTransferAmount || pendingBooking.grandTotal || 0),
-        slipTransferRef: verified.data.slipTransferRef || "",
-        slipVerifyChecks: verified.data.slipVerifyChecks || null,
-        slipRawResult: verified.data.slipRawResult || null
-      };
-    }
+    // ปิดการตรวจสลิปอัตโนมัติชั่วคราว ลูกค้ายังต้องแนบสลิปและ Owner ตรวจเองได้
+    // const verified = await apiRequest({
+    //   action: "precheckSlip",
+    //   slipBase64: pendingBooking.slipBase64,
+    //   booking: pendingBooking
+    // });
+    pendingBooking = {
+      ...pendingBooking,
+      paymentStatus: "รอตรวจสอบสลิป",
+      status: "รอยืนยัน",
+      slipVerifyStatus: "not_checked",
+      slipVerifyMessage: "ปิดการตรวจสลิปอัตโนมัติชั่วคราว"
+    };
 
     confirmSendBookingBtn.textContent = "กำลังจองที่พัก...";
     const result = await apiRequest({ action: "create", booking: pendingBooking });
@@ -1173,6 +1229,7 @@ async function confirmSendBooking() {
     }
 
     bookingConfirmModal.classList.add("hidden");
+    showBookingSuccess(pendingBooking.bookingCode);
     showToast(`ส่งคำจองสำเร็จ เลขรายการจอง ${pendingBooking.bookingCode}`);
 
     bookingForm.reset();
@@ -1338,6 +1395,19 @@ confirmSendBookingBtn.addEventListener("click", confirmSendBooking);
 backToEditBtn.addEventListener("click", () => {
   bookingConfirmModal.classList.add("hidden");
   showToast("กลับไปแก้ข้อมูลได้เลย");
+});
+copyBookingCodeBtn?.addEventListener("click", () => copyCompletedBookingCode());
+sendBookingCodeBtn?.addEventListener("click", () => {
+  const facebookUrl = String(sendBookingCodeBtn.dataset.facebookUrl || "").trim();
+  if (!facebookUrl) {
+    showToast("บ้านพักยังไม่ได้ตั้งลิงก์ Facebook กรุณาติดต่อบ้านพักโดยตรง");
+    return;
+  }
+  copyCompletedBookingCode(false);
+  window.open(facebookUrl, "_blank", "noopener");
+  showToast(`คัดลอกเลขจอง ${completedBookingCode} แล้ว กรุณาวางในข้อความถึงเพจ`);
+  bookingSuccessModal?.classList.add("hidden");
+  document.body.classList.remove("booking-success-open");
 });
 
 historyForm.addEventListener("submit", lookupBooking);

@@ -1153,7 +1153,11 @@
             </div>
             <div class="field">
               <label>ลิงก์เพจ</label>
-              <input type="url" id="settingPageUrl" />
+              <input type="url" id="settingPageUrl" placeholder="https://facebook.com/..." />
+            </div>
+            <div class="field">
+              <label>เบอร์โทรติดต่อที่พัก</label>
+              <input type="tel" id="settingContactPhone" placeholder="เช่น 0812345678" inputmode="tel" />
             </div>
             <div class="field">
               <label>ลิงก์ GPS</label>
@@ -1425,7 +1429,7 @@
         <h3>เพิ่มเพื่อน LINE Official</h3>
       </div>
       <img class="line-add-qr" src="https://qr-official.line.me/gs/M_298iaawi_BW.png?oat_content=qr" alt="QR Code LINE Official Account" />
-      <p>สแกน QR Code หรือกดปุ่มด้านล่างเพื่อเพิ่มเพื่อน จากนั้นทักข้อความนี้หา LINE Official</p>
+      <p>สแกน QR Code เพื่อเพิ่มเพื่อน LINE Official จากนั้นกดคัดลอกและส่งข้อความสมัครด้านล่าง ระบบจะเชื่อม LINE นี้กับบ้านพักของคุณอัตโนมัติ ไม่ต้องกรอก LINE ID</p>
       <code class="line-register-command" id="lineRegisterCommand">สมัครแจ้งเตือน</code>
       <div class="line-add-actions">
         <a href="https://line.me/R/ti/p/@298iaawi" target="_blank" rel="noopener">เปิดใน LINE</a>
@@ -1511,7 +1515,7 @@
       const panel = document.getElementById('settingsPanel');
       const title = panel?.querySelector('.section-mini-head h4');
       const accountIds = ['settingBankAccountName','settingBankName','settingBankAccountNumber','settingPromptPayId'];
-      const pageIds = ['settingAddonList','settingPageUrl','settingGpsUrl','settingSiteName','settingLogoFileInput','settingPropertyPolicy','settingPaymentNote','settingHeroTextPill','settingHeroTextTitle','settingHeroTextBody','settingHeroTextImageFile','settingHeroCardEyebrow','settingHeroCardTitle','settingHeroCardSubtitle','settingHeroCardImageFile'];
+      const pageIds = ['settingAddonList','settingPageUrl','settingContactPhone','settingGpsUrl','settingSiteName','settingLogoFileInput','settingPropertyPolicy','settingPaymentNote','settingHeroTextPill','settingHeroTextTitle','settingHeroTextBody','settingHeroTextImageFile','settingHeroCardEyebrow','settingHeroCardTitle','settingHeroCardSubtitle','settingHeroCardImageFile'];
       const setVisible = (id, visible) => {
         const el = document.getElementById(id);
         const field = el?.closest('.field');

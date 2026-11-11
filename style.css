@@ -2725,6 +2725,161 @@ td small {
   }
 }
 
+.booking-success-card {
+  width: min(460px, 100%);
+  text-align: center;
+}
+
+.booking-success-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.booking-success-card h3 {
+  margin: 14px 0 8px;
+}
+
+.booking-success-code {
+  display: block;
+  padding: 14px;
+  border: 2px dashed var(--green-700);
+  border-radius: 16px;
+  background: var(--green-50);
+  color: var(--green-900);
+  font-size: clamp(24px, 7vw, 36px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.booking-success-warning {
+  margin: 14px 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff7d6;
+  color: #754c00;
+  font-weight: 800;
+}
+
+.booking-success-actions {
+  display: grid;
+  grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
+  gap: 10px;
+}
+
+.booking-success-actions button {
+  width: 100%;
+  min-height: 58px;
+  border-radius: 18px;
+  font-weight: 900;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.booking-success-actions button:not(:disabled):active {
+  transform: translateY(1px) scale(.99);
+}
+
+.booking-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1.5px solid var(--green-700);
+  background: linear-gradient(180deg, #fff, #f4fbf7);
+  color: var(--green-900);
+  box-shadow: 0 8px 18px rgba(20, 83, 63, .09);
+}
+
+.booking-copy-btn:hover {
+  background: var(--green-50);
+}
+
+.booking-send-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 14px;
+  border: 0;
+  background: linear-gradient(135deg, #2384ff 0%, #1877f2 48%, #0759c7 100%);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(24, 119, 242, .3);
+  text-align: center;
+}
+
+.booking-send-btn:hover {
+  box-shadow: 0 15px 30px rgba(24, 119, 242, .34);
+  transform: translateY(-1px);
+}
+
+.booking-send-btn:disabled {
+  background: #9ca3af;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.booking-action-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.booking-facebook-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: end center;
+  border-radius: 50%;
+  background: #fff;
+  color: #1877f2;
+  font: 900 31px/34px Arial, sans-serif;
+  overflow: hidden;
+}
+
+.booking-action-text {
+  display: grid;
+  min-width: 0;
+}
+
+.booking-action-text strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.booking-action-text small {
+  margin-top: 2px;
+  color: rgba(255,255,255,.82);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.booking-action-arrow {
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+body.booking-success-open {
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .booking-success-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-send-btn {
+    order: -1;
+  }
+}
+
+
 /* Final override: topup modal must stay centered and inside the viewport. */
 #topupModal.modal-overlay {
   position: fixed;
@@ -6346,5 +6501,187 @@ body.modal-open {
   .room-grid .room-card button {
     width: 100%;
     flex-basis: auto;
+  }
+}
+
+/* Customer mobile header: keep booking history at the top-right. */
+@media (max-width: 560px) {
+  .customer-topbar {
+    position: sticky;
+    top: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .customer-topbar .brand {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .customer-topbar .brand > div {
+    min-width: 0;
+  }
+
+  .customer-topbar .customer-only-nav {
+    width: auto;
+    flex: 0 0 auto;
+    margin-left: auto;
+    overflow: visible;
+    padding: 4px;
+    border-radius: 12px;
+  }
+
+  .customer-topbar .customer-only-nav .nav-link {
+    display: block;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+}
+
+/* Compact slip uploader on phones. */
+@media (max-width: 560px) {
+  .slip-upload {
+    gap: 8px;
+  }
+
+  .slip-dropzone {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 8px 10px;
+    min-height: 0;
+    padding: 10px;
+    text-align: left;
+  }
+
+  .slip-dropzone .slip-icon {
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    font-size: 19px;
+  }
+
+  .slip-dropzone .slip-text {
+    min-width: 0;
+  }
+
+  .slip-dropzone .slip-text strong {
+    font-size: 14px;
+  }
+
+  .slip-dropzone .slip-text span,
+  .slip-dropzone .slip-text small {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .slip-dropzone .slip-pill {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .slip-preview {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px;
+    text-align: left;
+  }
+
+  .slip-preview-thumb {
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .slip-preview-info {
+    min-width: 0;
+  }
+
+  .slip-preview-info b {
+    width: 100%;
+    max-width: none;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .slip-preview-info span {
+    font-size: 11px;
+  }
+
+  .slip-preview button {
+    width: auto;
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+}
+
+/* Final booking success actions: full-width bars with one-line labels. */
+.booking-success-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100%;
+  gap: 10px;
+}
+
+.booking-success-actions .booking-send-btn,
+.booking-success-actions .booking-copy-btn {
+  width: 100% !important;
+  min-width: 0;
+  min-height: 52px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.booking-success-actions .booking-send-btn {
+  order: -1;
+}
+
+/* Mobile booking calendar: prevent status text from overlapping the date. */
+@media (max-width: 560px) {
+  .calendar-grid {
+    gap: 5px;
+  }
+
+  .calendar-day {
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 2px;
+    line-height: 1;
+  }
+
+  .calendar-day .day-number {
+    display: block;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .calendar-day .badge {
+    position: static;
+    display: block;
+    margin: 0;
+    font-size: 8px;
+    line-height: 1;
+    white-space: nowrap;
   }
 }

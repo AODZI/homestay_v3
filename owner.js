@@ -43,6 +43,7 @@ const settingBankAccountName = document.getElementById("settingBankAccountName")
 const settingBankAccountNumber = document.getElementById("settingBankAccountNumber");
 const settingPromptPayId = document.getElementById("settingPromptPayId");
 const settingPageUrl = document.getElementById("settingPageUrl");
+const settingContactPhone = document.getElementById("settingContactPhone");
 const settingGpsUrl = document.getElementById("settingGpsUrl");
 const settingSiteName = document.getElementById("settingSiteName");
 const settingLogoFileInput = document.getElementById("settingLogoFileInput");
@@ -273,7 +274,8 @@ async function loadDashboard(silent = false) {
     renderDateDetails(ownerSelectedDateKey);
     renderBookingTable();
     renderPrepSections();
-    autoVerifyPendingSlips();
+    // ปิดการตรวจสลิปอัตโนมัติชั่วคราว Owner ยังสามารถกดตรวจสลิปเองได้
+    // autoVerifyPendingSlips();
     renderCreditCard();
     renderHeaderCredit();
   } catch (error) {
@@ -319,6 +321,7 @@ function renderSettingsForm() {
   settingBankAccountNumber.value = settings.bankAccountNumber.value || "";
   if (settingPromptPayId) settingPromptPayId.value = settings.promptPayId?.value || "";
   settingPageUrl.value = settings.pageUrl?.value || "";
+  if (settingContactPhone) settingContactPhone.value = settings.heroContent?.contactPhone || "";
   settingGpsUrl.value = settings.gpsUrl?.value || "";
   const currentLogoValue = settings.logoUrl?.value || "";
   settingLogoFileInput.value = "";
@@ -516,7 +519,8 @@ async function saveSettings(event) {
     cardEyebrow: settingHeroCardEyebrow?.value.trim() || currentHero.cardEyebrow,
     cardTitle: settingHeroCardTitle?.value.trim() || currentHero.cardTitle,
     cardSubtitle: settingHeroCardSubtitle?.value.trim() || currentHero.cardSubtitle,
-    cardImage: nextHeroCardImage
+    cardImage: nextHeroCardImage,
+    contactPhone: settingContactPhone?.value.trim() || ""
   };
 
   const addonItems = getAddonSettingsFromForm();
